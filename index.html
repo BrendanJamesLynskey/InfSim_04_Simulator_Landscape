@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Inference Simulators 04 — The LLM Simulator Landscape</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Geist+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #1c1815;
+            --bg-card: #231e1a;
+            --bg-code: #2b2520;
+            --text-primary: #efe8dc;
+            --text-secondary: #a2978b;
+            --accent: #aabd59;
+            --accent-dim: #aabd5944;
+            --accent-glow: #aabd5933;
+            --border: #3a322b;
+            --font-display: 'Bricolage Grotesque', sans-serif;
+            --font-mono: 'Geist Mono', 'Geist Mono', monospace;
+            --font-body: 'Instrument Sans', sans-serif;
+            --max-width: 900px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 17px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ── Header ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .series-label {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 .accent {
+            color: var(--accent);
+        }
+
+        .hero .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        /* ── Tag Pills ── */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            white-space: nowrap;
+        }
+
+        /* ── Pipeline Flow Bar ── */
+        .pipeline {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            max-width: var(--max-width);
+        }
+
+        .pipeline-step {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 0.3rem 0.7rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .pipeline-arrow {
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        /* ── Slides ── */
+        .slide {
+            min-height: 100vh;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide-number {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--accent-dim);
+            position: absolute;
+            top: 2rem;
+            right: 1.5rem;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .slide h2 {
+            font-family: var(--font-display);
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            line-height: 1.25;
+        }
+
+        .slide h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .slide p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .slide p strong {
+            color: var(--text-primary);
+        }
+
+        .slide ul, .slide ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .slide li {
+            margin-bottom: 0.4rem;
+        }
+
+        .slide li strong {
+            color: var(--text-primary);
+        }
+
+        /* ── Code Blocks ── */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1.25rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: rgba(170,189,89,0.08);
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #dad1c5;
+        }
+
+        /* Syntax highlighting (manual) */
+        .kw { color: #de805a; }
+        .fn { color: #d7bbdf; }
+        .str { color: #bcdbd4; }
+        .cm { color: #a2978b; font-style: italic; }
+        .num { color: #97cdc6; }
+        .type { color: #e3b174; }
+        .dir { color: #de805a; }
+        .mac { color: #e3b174; }
+
+        /* ── Tables ── */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--bg-code);
+            color: var(--accent);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-display);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:nth-child(even) td {
+            background: rgba(35,30,26,0.5);
+        }
+
+        /* ── Diagrams ── */
+        .diagram-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .diagram-box {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .diagram-box.accent {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(170,189,89,0.08);
+        }
+
+        .diagram-box.dim {
+            color: var(--text-secondary);
+            border-color: var(--border);
+        }
+
+        .diagram-arrow {
+            color: var(--accent);
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        /* Vertical flow diagrams */
+        .diagram-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .diagram-vertical .diagram-arrow {
+            font-size: 1.1rem;
+        }
+
+        /* Nested hierarchy diagram */
+        .hierarchy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .hierarchy-level {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .hierarchy-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .hierarchy-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .hierarchy-item {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .hierarchy-item.accent {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(170,189,89,0.08);
+        }
+
+        /* Grid diagram */
+        .diagram-grid {
+            display: grid;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .diagram-grid.cols-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .diagram-grid.cols-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .diagram-panel {
+            padding: 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .diagram-panel.accent-border {
+            border-left: 3px solid var(--accent);
+        }
+
+        .diagram-panel h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .diagram-panel p, .diagram-panel ul {
+            font-size: 0.85rem;
+        }
+
+        /* ── Callout Boxes ── */
+        .callout {
+            background: var(--bg-card);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+        }
+
+        .callout p {
+            margin-bottom: 0;
+        }
+
+        .callout .callout-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+
+        /* ── Tier Visual ── */
+        .tier-visual {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .tier-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .tier-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 90px;
+            text-align: right;
+        }
+
+        .tier-fill {
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 0.75rem;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            white-space: nowrap;
+            transition: width 0.6s ease;
+        }
+
+        .tier-cost {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            min-width: 70px;
+        }
+
+        /* ── Contents list ── */
+        .contents-list {
+            list-style: none;
+            padding-left: 0;
+            counter-reset: contents;
+        }
+
+        .contents-list li {
+            counter-increment: contents;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .contents-list li:last-child {
+            border-bottom: none;
+        }
+
+        .contents-list li::before {
+            content: counter(contents, decimal-leading-zero);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 2rem;
+        }
+
+        .contents-list a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .contents-list a:hover {
+            color: var(--accent);
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .slide {
+                padding: 3rem 1rem;
+                min-height: auto;
+            }
+
+            .slide-number {
+                font-size: 3rem;
+                top: 1.5rem;
+                right: 1rem;
+            }
+
+            .slide h2 {
+                font-size: 1.5rem;
+            }
+
+            .diagram-grid.cols-2,
+            .diagram-grid.cols-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .pipeline {
+                gap: 0.15rem;
+            }
+
+            .pipeline-step {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            table {
+                font-size: 0.78rem;
+            }
+
+            .tier-label {
+                min-width: 60px;
+                font-size: 0.65rem;
+            }
+
+            .tier-fill {
+                font-size: 0.6rem;
+                height: 26px;
+            }
+        }
+
+        /* ── Interactive controls (added for Local LLM series) ── */
+        .control-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+        }
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .control-row label {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            min-width: 180px;
+        }
+        .control-row input[type="range"] {
+            flex: 1;
+            min-width: 160px;
+            accent-color: var(--accent);
+        }
+        .control-row input[type="number"],
+        .control-row select {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 4px;
+            padding: 0.3rem 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+        .control-row .val {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 80px;
+            text-align: right;
+        }
+        .btn {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            padding: 0.4rem 0.9rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .btn:hover { background: rgba(170,189,89,0.2); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn.secondary {
+            background: var(--bg-code);
+            color: var(--text-secondary);
+            border-color: var(--border);
+        }
+        .result-box {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-top: 0.75rem;
+        }
+        .result-box .line-label { color: var(--text-secondary); }
+        .result-box .line-val   { color: var(--accent); font-weight: 600; }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .metric {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            text-align: center;
+        }
+        .metric .metric-label {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .metric .metric-value {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-top: 0.2rem;
+        }
+
+        /* Canvas / SVG containers */
+        .canvas-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+        .canvas-wrap canvas,
+        .canvas-wrap svg {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+
+        /* Small inline badge */
+        .badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            vertical-align: middle;
+            margin-left: 0.3rem;
+        }
+        .badge.ok    { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+        .badge.warn  { border-color: #e3b174; color: #e3b174; background: rgba(227,177,116,0.08); }
+        .badge.bad   { border-color: #de805a; color: #de805a; background: rgba(222,128,90,0.08); }
+
+
+        /* ── LLM Inference Simulators additions ── */
+        .canvas-wrap canvas { image-rendering: auto; display: block; width: 100%; height: auto; }
+        .canvas-wrap svg { max-width: 100%; height: auto; }
+        .ladder { display: grid; gap: 0.4rem; margin: 1.25rem 0; }
+        .ladder-row {
+            display: grid; grid-template-columns: 11rem 1fr 7.5rem; gap: 0.75rem; align-items: center;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+            padding: 0.55rem 0.85rem; font-size: 0.88rem;
+        }
+        .ladder-row .rung { font-family: var(--font-display); font-weight: 600; color: var(--accent); }
+        .ladder-row .speed { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-secondary); text-align: right; }
+        .res-list { list-style: none; padding: 0; margin: 0.75rem 0; }
+        .res-list li { padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+        .res-list li:last-child { border-bottom: none; }
+        .res-list .what { color: var(--text-secondary); display: block; font-size: 0.86rem; margin-top: 0.15rem; }
+        .res-list a { color: var(--accent); text-decoration: none; }
+        .res-list a:hover { text-decoration: underline; }
+        .qa { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin: 0.6rem 0; padding: 0.2rem 1rem; }
+        .qa summary { cursor: pointer; padding: 0.6rem 0; font-weight: 600; }
+        .qa p, .qa ul { margin-bottom: 0.75rem; font-size: 0.92rem; }
+        .sim-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.4rem 1.25rem; }
+        .chart-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+        .chart-title { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.3rem; }
+        .slide a { color: var(--accent); }
+        @media (max-width: 640px) {
+            .ladder-row { grid-template-columns: 1fr; gap: 0.2rem; }
+            .ladder-row .speed { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="series-label">LLM Inference Simulators &mdash; Presentation 04</div>
+    <h1>The LLM <span class="accent">Simulator</span> Landscape</h1>
+    <p class="subtitle">A guided tour of the tools: serving-level simulators (Vidur, LLMServingSim, SplitwiseSim), hardware-level models (LLMCompass, Timeloop, SCALE-Sim), system and network simulators (ASTRA-sim, gem5, SST, SystemC), and analytical calculators &mdash; sorted by the question each one answers.</p>
+
+    <div class="tags">
+        <span class="tag">Vidur</span>
+        <span class="tag">LLMServingSim</span>
+        <span class="tag">LLMCompass</span>
+        <span class="tag">ASTRA-sim</span>
+        <span class="tag">gem5 / SST</span>
+        <span class="tag">SystemC TLM</span>
+    </div>
+
+    <div class="pipeline">
+        <span class="pipeline-step">Serving</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Cluster</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Accelerator</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Micro-arch</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Network</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>Topics We'll Cover</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">A Map: Which Question, Which Level?</a></li>
+        <li><a href="#slide-02">Serving-Level Simulators</a></li>
+        <li><a href="#slide-03">Inside Vidur</a></li>
+        <li><a href="#slide-04">Accelerator-Level Models</a></li>
+        <li><a href="#slide-05">System, Network and Micro-Architecture Simulators</a></li>
+        <li><a href="#slide-06">Side by Side</a></li>
+        <li><a href="#slide-07">Workloads and Traces</a></li>
+        <li><a href="#slide-08">Build or Reuse?</a></li>
+        <li><a href="#slide-09">What to Take Away</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>A Map: Which Question, Which Level?</h2>
+    <p>LLM-related simulators fall into a few bands. Each band takes a different input and answers a different question. The usual mistake is reaching for a tool from the wrong band.</p>
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 720 300" width="720" height="300" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .band { fill: #231e1a; stroke: #3a322b; }
+                .h    { fill: #aabd59; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 12.5px; }
+                .q    { fill: #a2978b; font-family: 'Geist Mono', monospace; font-size: 10px; }
+                .tool { fill: #2b2520; stroke: #e3b174; }
+                .tt   { fill: #efe8dc; font-family: 'Geist Mono', monospace; font-size: 10.5px; }
+                .ax   { fill: #a2978b; font-family: 'Geist Mono', monospace; font-size: 10px; }
+            </style>
+            <rect x="5" y="10" width="710" height="62" rx="6" class="band"/>
+            <text x="15" y="30" class="h">Serving / cluster</text><text x="15" y="46" class="q">"What TTFT/TPOT/goodput for this</text><text x="15" y="60" class="q"> request stream and deployment?"</text>
+            <rect x="250" y="25" width="70" height="26" rx="4" class="tool"/><text x="262" y="42" class="tt">Vidur</text>
+            <rect x="330" y="25" width="110" height="26" rx="4" class="tool"/><text x="340" y="42" class="tt">LLMServingSim</text>
+            <rect x="450" y="25" width="100" height="26" rx="4" class="tool"/><text x="460" y="42" class="tt">SplitwiseSim</text>
+            <rect x="560" y="25" width="145" height="26" rx="4" class="tool"/><text x="570" y="42" class="tt">DistServe sim / ours</text>
+
+            <rect x="5" y="80" width="710" height="62" rx="6" class="band"/>
+            <text x="15" y="100" class="h">Analytical</text><text x="15" y="116" class="q">"Rough step time and memory for</text><text x="15" y="130" class="q"> this model on that hardware?"</text>
+            <rect x="250" y="95" width="90" height="26" rx="4" class="tool"/><text x="260" y="112" class="tt">LLM-Viewer</text>
+            <rect x="350" y="95" width="60" height="26" rx="4" class="tool"/><text x="362" y="112" class="tt">GenZ</text>
+            <rect x="420" y="95" width="80" height="26" rx="4" class="tool"/><text x="430" y="112" class="tt">Calculon</text>
+            <rect x="510" y="95" width="195" height="26" rx="4" class="tool"/><text x="520" y="112" class="tt">roofline spreadsheets</text>
+
+            <rect x="5" y="150" width="710" height="62" rx="6" class="band"/>
+            <text x="15" y="170" class="h">Accelerator architecture</text><text x="15" y="186" class="q">"How should the compute array,</text><text x="15" y="200" class="q"> SRAM and dataflow be designed?"</text>
+            <rect x="250" y="165" width="100" height="26" rx="4" class="tool"/><text x="260" y="182" class="tt">LLMCompass</text>
+            <rect x="360" y="165" width="160" height="26" rx="4" class="tool"/><text x="370" y="182" class="tt">Timeloop+Accelergy</text>
+            <rect x="530" y="165" width="90" height="26" rx="4" class="tool"/><text x="540" y="182" class="tt">SCALE-Sim</text>
+            <rect x="630" y="165" width="75" height="26" rx="4" class="tool"/><text x="638" y="182" class="tt">Accel-Sim</text>
+
+            <rect x="5" y="220" width="710" height="62" rx="6" class="band"/>
+            <text x="15" y="240" class="h">System &amp; network</text><text x="15" y="256" class="q">"What do collectives, memory systems</text><text x="15" y="270" class="q"> and interconnects cost?"</text>
+            <rect x="250" y="235" width="90" height="26" rx="4" class="tool"/><text x="260" y="252" class="tt">ASTRA-sim</text>
+            <rect x="350" y="235" width="60" height="26" rx="4" class="tool"/><text x="362" y="252" class="tt">gem5</text>
+            <rect x="420" y="235" width="50" height="26" rx="4" class="tool"/><text x="432" y="252" class="tt">SST</text>
+            <rect x="480" y="235" width="120" height="26" rx="4" class="tool"/><text x="490" y="252" class="tt">SystemC TLM</text>
+            <rect x="610" y="235" width="95" height="26" rx="4" class="tool"/><text x="620" y="252" class="tt">ns-3 / Garnet</text>
+            <text x="15" y="296" class="ax">upper bands take request streams; lower bands take operators, traces or instructions</text>
+        </svg>
+    </div>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>Serving-Level Simulators</h2>
+    <p>These simulate a whole serving deployment (request arrivals, a scheduler, batching, KV-cache management, many replicas) and report the latency and throughput users experience. They are discrete-event simulators whose events are batch steps and requests, not cycles.</p>
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Vidur (Microsoft Research, MLSys 2024)</h4>
+            <p>The reference serving simulator. Profiles real GPU operators once, trains per-operator runtime predictors, then simulates vLLM-, Orca- and Sarathi-style schedulers at scale. <em>Vidur-Search</em> explores deployment configurations (parallelism, batch size, scheduler) for a target workload at a fraction of the cost of trying them on GPUs.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>LLMServingSim (IISWC 2024)</h4>
+            <p>A hardware/software co-simulation infrastructure for LLM serving at scale. It combines an iteration-level serving model with accelerator and network simulators (it builds on ASTRA-sim) so that new NPU or memory designs can be judged on serving metrics rather than kernel speed alone.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>SplitwiseSim (Microsoft, with Splitwise, ISCA 2024)</h4>
+            <p>The discrete-event simulator released alongside the Splitwise paper on phase splitting. It models prefill and decode machine pools, KV transfer and cluster-level scheduling, driven by production-derived traces. It is the closest public relative of the simulator built in this series.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>DistServe's simulator (OSDI 2024)</h4>
+            <p>DistServe uses a simulator inside its placement algorithm: it searches over prefill and decode parallelism and instance counts, estimating goodput for each candidate by simulation, then deploys the best one.</p>
+        </div>
+    </div>
+    <p style="font-size:0.9rem;">Research in this band moves quickly; new serving simulators appear every few months, often as artifacts of systems papers. Check a paper's artifact link before writing your own.</p>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>Inside Vidur</h2>
+    <p>Vidur's structure is the template for a calibrated serving simulator, and the same separation of concerns from deck 02 at production scale.</p>
+    <div class="diagram-flow">
+        <div class="diagram-box">Operator profiling<br><span style="font-size:0.75rem;color:var(--text-secondary)">GEMMs, attention, collectives on real GPUs</span></div>
+        <div class="diagram-arrow">&rarr;</div>
+        <div class="diagram-box accent">Runtime predictors<br><span style="font-size:0.75rem;color:var(--text-secondary)">regressors per operator, interpolate unseen shapes</span></div>
+        <div class="diagram-arrow">&rarr;</div>
+        <div class="diagram-box">Event-driven engine<br><span style="font-size:0.75rem;color:var(--text-secondary)">global and replica schedulers, batching, KV</span></div>
+        <div class="diagram-arrow">&rarr;</div>
+        <div class="diagram-box">Metrics &amp; search<br><span style="font-size:0.75rem;color:var(--text-secondary)">TTFT, TPOT, MFU; config search</span></div>
+    </div>
+    <ul>
+        <li><strong>Key insight:</strong> LLMs are built from a small set of operators, so profiling those operators at many shapes covers whole models. No need to profile every model end to end.</li>
+        <li><strong>The cost model is data.</strong> Swap in profiles from a different GPU, or, for a novel accelerator, from an RTL or analytical model of each operator.</li>
+        <li><strong>Validation:</strong> the paper compares simulated against measured latencies on real deployments and reports errors in the single-digit percent range for most configurations.</li>
+        <li><strong>For a new architecture</strong>, the profiling stage is what you replace. You do not have the GPU tables, so you build the operator cost model from the architecture simulator itself.</li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>Accelerator-Level Models</h2>
+    <div class="table-wrap">
+    <table>
+        <tr><th>Tool</th><th>From</th><th>What it models</th><th>Use it to&hellip;</th></tr>
+        <tr><td><strong>LLMCompass</strong></td><td>Princeton, ISCA 2024</td><td>Block-level hardware description (cores, systolic arrays, vector units, SRAM, HBM, links) with an automatic operator mapper, plus area and cost models</td><td>Compare hypothetical LLM accelerator designs on performance and cost</td></tr>
+        <tr><td><strong>Timeloop + Accelergy</strong></td><td>MIT / NVIDIA</td><td>Loop-nest mappings of tensor operations onto a memory hierarchy; energy per access</td><td>Explore dataflows and buffer sizes for one operator at a time</td></tr>
+        <tr><td><strong>SCALE-Sim</strong></td><td>Georgia Tech / Arm</td><td>Cycle-level systolic-array GEMM and convolution, with memory traffic</td><td>Size a systolic array, compare weight/output/input-stationary dataflows</td></tr>
+        <tr><td><strong>Accel-Sim / GPGPU-Sim</strong></td><td>UBC, Purdue and others</td><td>Cycle-level NVIDIA-like GPU, trace- or execution-driven</td><td>Study GPU micro-architecture changes on real kernels</td></tr>
+        <tr><td><strong>LLM-Viewer, GenZ</strong></td><td>Academic, 2024</td><td>Analytical roofline per layer and phase</td><td>Quick "what-if" on memory, bandwidth and FLOPs for many models</td></tr>
+        <tr><td><strong>Calculon</strong></td><td>NVIDIA, SC 2023</td><td>Analytical model of large-model <em>training</em> across parallelism strategies</td><td>Co-design training systems; a good example of a pure analytical model at scale</td></tr>
+    </table>
+    </div>
+    <div class="callout">
+        <div class="callout-label">Novel compute</div>
+        <p>None of these knows about optical matrix units, ADC/DAC conversion or FHE polynomial arithmetic. That is why organisations building novel architectures write in-house simulators, often reusing the <em>structure</em> of these tools while replacing the hardware description.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>System, Network and Micro-Architecture Simulators</h2>
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>ASTRA-sim</h4>
+            <p>Distributed-ML system simulator from Georgia Tech with Meta and Intel. Three layers: a <em>workload</em> layer (now fed by MLCommons <strong>Chakra</strong> execution traces), a <em>system</em> layer (collective algorithms and scheduling), and a pluggable <em>network</em> layer (analytical, Garnet or ns-3). The tool for "what does this all-reduce cost on that topology?"</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>gem5</h4>
+            <p>The long-running open-source computer-architecture simulator: CPU models from functional to out-of-order, the Ruby and Garnet memory and network models, full-system Linux boot. Slow but deep; the standard for memory-hierarchy research.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>SST (Structural Simulation Toolkit)</h4>
+            <p>Sandia's parallel, component-based framework. Components such as processors, memory (with the DRAMSim/Ramulator family of DRAM models) and networks are wired up from Python, and the core runs them in parallel with MPI. Built for HPC-scale co-design.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>SystemC TLM and QEMU virtual platforms</h4>
+            <p>The industry route to running real software pre-silicon: QEMU or instruction-set simulators for the CPU, SystemC TLM-2.0 models for the accelerators and peripherals. Used for driver and firmware bring-up rather than architectural studies.</p>
+        </div>
+    </div>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>Side by Side</h2>
+    <div class="table-wrap">
+    <table>
+        <tr><th>Tool</th><th>Engine</th><th>Main language</th><th>Input</th><th>Key outputs</th></tr>
+        <tr><td>Vidur</td><td>Discrete-event</td><td>Python</td><td>Request trace, model, deployment config</td><td>TTFT, TPOT, E2E, MFU, KV use; best config</td></tr>
+        <tr><td>LLMServingSim</td><td>Iteration-level + HW sims</td><td>Python / C++</td><td>Requests, NPU and network config</td><td>Serving latency and throughput on new hardware</td></tr>
+        <tr><td>SplitwiseSim</td><td>Discrete-event</td><td>Python</td><td>Production-style traces, cluster spec</td><td>Latency and throughput, cost and power by pool</td></tr>
+        <tr><td>LLMCompass</td><td>Analytical + mapper</td><td>Python</td><td>Hardware block description, operator shapes</td><td>Latency per operator, area, cost</td></tr>
+        <tr><td>ASTRA-sim</td><td>Discrete-event</td><td>C++</td><td>Chakra traces, system and network config</td><td>Iteration time, communication breakdown</td></tr>
+        <tr><td>gem5</td><td>Discrete-event (ticks)</td><td>C++ with Python config</td><td>Binaries or traces</td><td>Cycles, cache and memory statistics</td></tr>
+        <tr><td>Disaggregated_Inference_Sim</td><td>Discrete-event (SimPy)</td><td>Python</td><td>Poisson or replayed requests, hardware presets</td><td>Latency percentiles, utilisation, MFU/MBU, stage breakdown, hot-spot, Perfetto trace</td></tr>
+    </table>
+    </div>
+    <p>Note how often Python appears as the configuration and orchestration layer even where the core is C++. That is the shape of a modern in-house simulator: Python for workloads, configuration and analysis; a compiled core when speed demands it.</p>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>Workloads and Traces</h2>
+    <p>A simulator is only as good as its inputs. For LLM serving the inputs are request streams; for hardware they are operator graphs and execution traces.</p>
+    <ul>
+        <li><strong>MLPerf Inference LoadGen</strong> defines the standard load scenarios (Server, Offline, SingleStream, MultiStream) with latency constraints. A simulator that can emulate LoadGen's Server scenario can be compared against published MLPerf results.</li>
+        <li><strong>Production-derived traces.</strong> Microsoft's Azure LLM inference traces (released with Splitwise) give arrival times and prompt and output token counts for coding and conversation services. BurstGPT gives similar data with bursty arrivals.</li>
+        <li><strong>Prompt and output length distributions</strong> are often sampled from conversation datasets such as ShareGPT. Lengths are heavy-tailed, which is why the companion simulator samples lognormal lengths with a tunable coefficient of variation.</li>
+        <li><strong>Chakra execution traces</strong> (MLCommons) capture the operator and communication graph of a real PyTorch run in a framework-neutral format that ASTRA-sim and others can replay.</li>
+        <li><strong>Synthetic but principled.</strong> Poisson arrivals are the right default for many independent users; add bursts (a Markov-modulated or Gamma process) to stress queues.</li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-08">
+    <div class="slide-number">08</div>
+    <h2>Build or Reuse?</h2>
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Reuse when&hellip;</h4>
+            <ul>
+                <li>The hardware is a GPU or close to one (use Vidur-style profiling).</li>
+                <li>The question is about collectives on a known topology (use ASTRA-sim).</li>
+                <li>You need a full-system CPU and memory model (use gem5 or SST).</li>
+                <li>You need answers this week.</li>
+            </ul>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Build in-house when&hellip;</h4>
+            <ul>
+                <li>The compute primitive is new (optical, analogue, in-memory, FHE-specific).</li>
+                <li>The simulator must sit inside your own compiler and runtime toolchain.</li>
+                <li>It doubles as the pre-tape-out verification reference.</li>
+                <li>You must defend every assumption to customers and investors.</li>
+            </ul>
+        </div>
+    </div>
+    <div class="callout">
+        <div class="callout-label">The pragmatic middle</div>
+        <p>Build the core model in-house, borrow the <em>interfaces</em>: accept Chakra or ONNX graphs as input, emit Chrome traces and standard serving metrics, and validate against Vidur or MLPerf numbers on a GPU baseline. Your simulator is then credible on known hardware before it predicts unknown hardware.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-09">
+    <div class="slide-number">09</div>
+    <h2>What to Take Away</h2>
+    <ul>
+        <li><strong>Four bands:</strong> serving, analytical, accelerator architecture, system and network. Choose by the question.</li>
+        <li><strong>Vidur</strong> sets the pattern for serving simulators: profile operators, predict, simulate the scheduler.</li>
+        <li><strong>LLMCompass, Timeloop and SCALE-Sim</strong> answer accelerator design questions; <strong>ASTRA-sim</strong> answers communication questions.</li>
+        <li><strong>Python orchestration around a compiled core</strong> is the dominant shape.</li>
+        <li><strong>Novel compute means an in-house simulator</strong>, made credible by reusing standard inputs and outputs and validating against known hardware first.</li>
+    </ul>
+    <div class="callout">
+        <div class="callout-label">Next</div>
+        <p>Deck 05 applies everything so far: a disaggregated prefill/decode server, simulated live in the browser.</p>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════ Footer ════════════════════════════════════ -->
+<footer class="footer">
+    <p>Part of the <a href="https://github.com/BrendanJamesLynskey/LLM_Hub_Inference_Simulators">LLM Inference Simulators series</a> &middot; code: <a href="https://github.com/BrendanJamesLynskey/Disaggregated_Inference_Sim">Disaggregated_Inference_Sim</a></p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem;"><a href="https://brendanjameslynskey.github.io/InfSim_03_LLM_Inference_Workloads/">&larr; 03 What You Are Simulating: LLM Inference Workloads</a> &nbsp;&middot;&nbsp; <a href="https://brendanjameslynskey.github.io/InfSim_05_Disaggregated_Inference/">05 Disaggregated Inference, Simulated &rarr;</a></p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem;"><a href="https://github.com/BrendanJamesLynskey/LLMs#hardware--inference">Back to the LLMs hub</a></p>
+</footer>
+
+<script>
+    // Smooth scroll for TOC links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    // Subtle fade-in on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.slide').forEach(slide => {
+        slide.style.opacity = '0';
+        slide.style.transform = 'translateY(30px)';
+        slide.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(slide);
+    });
+</script>
+
+</body>
+</html>
